@@ -3,13 +3,14 @@
 function prepareInteraction() {
   border = loadImage('images/runeborder.png');
 }
+
+// global variables
 let isMouthOpen = false;
 let glowpulse = 0
 let glowdirection = 1;
 let beamGrowth = 0;
 let beamSpeed = 0.05;
-let faceFade = 0;
-
+let cheekGrowth = 0;
 
 function drawInteraction(faces, hands) {
 
@@ -72,6 +73,7 @@ function drawInteraction(faces, hands) {
     Start drawing on the face here
     */
 
+//border image
 if (border) {
   push();
   imageMode(CENTER);
@@ -82,6 +84,7 @@ if (border) {
   pop();
 }
 
+//beam animation
     checkIfMouthOpen(face);
 
     if (isMouthOpen) {
@@ -104,6 +107,8 @@ if (border) {
       rightEyeWidth*1,rightEyeHeight*1,
       color(200,0,255,255),glowpulse);
 
+
+//eye glow and pulse
 function drawGlowEye(x,y,w,h,col,pulse){
   let outerpulse = sin(frameCount * 0.1) * 0.5 + 0.5;
   let innerglowcol = lerpColor(color(255,100,255),color(0,200,255),outerpulse);
@@ -133,7 +138,8 @@ function drawGlowEye(x,y,w,h,col,pulse){
 
   pop();
   }
-       
+
+//blurry eye ellipse
 function blurryellipse(x,y,w,h,baseCol,layers = 10){
   noFill();
   for (let i = 0; i < layers; i++){
@@ -177,74 +183,120 @@ function drawEyeBeams(x,y,length = 50,baseCol = color(255,255,255),layers = 10){
   }
 }
 
-//face outline
-drawFace(face);
 
-function drawFace(face){
-  if (!isMouthOpen) {
-    faceFade = lerp(faceFade,1,0.1);
-  } else { 
-    faceFade = lerp(faceFade,0,0.1);
+// cheek highlight 1
+drawHighlight(face);
+
+function drawHighlight (face){
+
+  if (isMouthOpen){
+    cheekGrowth += 0.02;
+    if (cheekGrowth > 1) cheekGrowth = 1;
+  } else {
+    cheekGrowth -= 0.02;
+    if (cheekGrowth <0) cheekGrowth = 0;
+  }
+  
+  if (cheekGrowth < 0.01) return;
+
+  let pulse = sin(frameCount * 0.1) * 0.5 + 0.5
+  let highlightPoints = [143,111,117,118];
+  let xPoints = [];
+  let yPoints = [];
+
+  for (let i = 0; i < highlightPoints.length; i++){
+    let pt = face.keypoints[highlightPoints[i]];
+    xPoints.push(pt.x);
+    yPoints.push(pt.y);
+  }
+  
+  let layers = 6;
+  for (let j = 0; j < layers; j++){
+    let baseAlpha = map(j,0,layers-1,60,255);
+    let alpha = baseAlpha * cheekGrowth;
+    let blur = map(j,0,layers-1,40,10)*pulse;
+    let scaleFactor = map(j,0,layers-1,1.05,1.0);
+  
+
+  drawingContext.shadowBlur = blur;
+  drawingContext.shadowColor = color(255,255,255,alpha);
+  noStroke();
+  fill(255,255,255,alpha);
+
+  
+  beginShape();
+  for(let i = 0; i < xPoints.length; i++){
+    let cx = xPoints[i];
+    let cy = yPoints[i];
+
+    let centerX = (xPoints.reduce((a,b) => a + b) / xPoints.length);
+    let centerY = (yPoints.reduce((a,b) => a + b) / yPoints.length);
+    let scaledX = centerX + (cx - centerX) * scaleFactor;
+    let scaledY = centerY + (cy - centerY) * scaleFactor;
+
+    vertex(scaledX,scaledY);
   }
 
-  if (faceFade < 0.01) return;
-
-let pulse = sin(frameCount * 0.1) * 0.5 + 0.5
-let faceOutlinePoints = [10, 338, 297, 332, 251, 389, 356, 447, 366, 435, 
-367, 379, 400, 152, 176, 150, 172, 132, 93, 234, 127, 21, 103, 67];
-let firstPt = face.keypoints[faceOutlinePoints[0]];
-let faceGlow = map(pulse,0,1,20,80);
-let baseAlpha = map(pulse,0,1,80,200) * faceFade;
-let lineWeight = map(pulse,0,1,1,4);
-
-
-push();
-noFill();
-stroke(255,255,255,180, layerAlpha);
-strokeWeight(layerWeight);
-drawingContext.shadowBlur = layerBlur;
-drawingContext.shadowColor = color(255,255,255,layerAlpha);
-
-for (let layer = 0; layer < 5; layer++){
-  let layerBlur = faceGlow * (1 + layer * 0.6);
-  let layerAlpha = baseAlpha * map(layer,0,4,0.6,0.05);
-  let layerWeight = lineWeight * (1+ layer * 1.5);
-
-
-beginShape();
-for (let i = 0; i < faceOutlinePoints.length; i++){
-  let pt= face.keypoints[faceOutlinePoints[i]];
-  vertex(pt.x,pt.y);
-}
-
-vertex(firstPt.x, firstPt.y);
 endShape();
 }
-
-stroke(255,255,255,faceGlowAlpha * 0.3);
-strokeWeight(lineWeight * 3);
-drawingContext.shadowBlur = faceGlow * 2;
-drawingContext.shadowColor = color(255,255,255, layerAlpha * 0.3);
-
-beginShape();
-for (let i = 0; i < faceOutlinePoints.length; i++) {
-  let pt = face.keypoints[faceOutlinePoints[i]];
-  vertex(pt.x,pt.y);
 }
+  
+//cheek highlight 2
+drawHightlight2(face);
 
-vertex(firstPt.x, firstPt.y,);
+function drawHightlight2(face){
+
+  if (isMouthOpen){
+    cheekGrowth += 0.02;
+    if (cheekGrowth > 1) cheekGrowth = 1;
+  } else {
+    cheekGrowth -= 0.02;
+    if (cheekGrowth <0) cheekGrowth = 0;
+  }
+  
+  if (cheekGrowth < 0.01) return;
+
+  let pulse = sin(frameCount * 0.2) * 0.05 + 0.9
+  let highlightPoints = [372,340,346,347];
+  let xPoints = [];
+  let yPoints = [];
+
+  for (let i = 0; i < highlightPoints.length; i++){
+    let pt = face.keypoints[highlightPoints[i]];
+    xPoints.push(pt.x);
+    yPoints.push(pt.y);
+  }
+  
+  let layers = 6;
+  for (let j = 0; j < layers; j++){
+    let baseAlpha = map(j,0,layers-1,60,255);
+    let alpha = baseAlpha * cheekGrowth;
+    let blur = map(j,0,layers-1,40,10)*pulse;
+    let scaleFactor = map(j,0,layers-1,1.05,1.0);
+  
+
+  drawingContext.shadowBlur = blur;
+  drawingContext.shadowColor = color(255,255,255,alpha);
+  noStroke();
+  fill(255,255,255,alpha);
+
+  
+  beginShape();
+  for(let i = 0; i < xPoints.length; i++){
+    let cx = xPoints[i];
+    let cy = yPoints[i];
+
+    let centerX = (xPoints.reduce((a,b) => a + b) / xPoints.length);
+    let centerY = (yPoints.reduce((a,b) => a + b) / yPoints.length);
+    let scaledX = centerX + (cx - centerX) * scaleFactor;
+    let scaledY = centerY + (cy - centerY) * scaleFactor;
+
+    vertex(scaledX,scaledY);
+  }
+
 endShape();
-
-pop();
-
 }
-
-//drawHighlight(face);
-
-//function drawHighlight (face);
-  //if(!isMouthOpen) return;
-  //let pulse = sin(frameCount * 0.1) * 0.5 + 0.5
-  //let highlightPoints = [143,111,117,118];
+}
 
 
 
@@ -297,5 +349,5 @@ function drawPoints(feature) {
     circle(element.x, element.y, 5);
   }
   pop()
-
+  
 }
