@@ -1,8 +1,9 @@
-// ----=  Faces  =----
+ // ----=  Faces  =----
 /* load images here */
 function prepareInteraction() {
-  //bgImage = loadImage('/images/background.png');
+  border = loadImage('images/runeborder.png');
 }
+
 
 function drawInteraction(faces, hands) {
 
@@ -65,6 +66,9 @@ function drawInteraction(faces, hands) {
     //my variables
     let glowpulse = 0;
     let glowdirection = 1;
+    let framewidth = 1280;
+    let frameheight = 960;
+    
 
     //colours
     let white = color(255,255,255,100);
@@ -77,6 +81,7 @@ function drawInteraction(faces, hands) {
     /*
     Start drawing on the face here
     */
+
 
     //eye glow
     glowpulse += glowdirection * 0.2;
@@ -102,8 +107,7 @@ function drawInteraction(faces, hands) {
       rightEyeWidth*1,rightEyeHeight*1,
       color(200,0,255,255),glowpulse);
     
-      
-
+    
 
     //ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
 
@@ -130,6 +134,17 @@ function drawInteraction(faces, hands) {
   }
   //------------------------------------------------------
   // You can make addtional elements here, but keep the face drawing inside the for loop. 
+
+if (border) {
+  push();
+  imageMode(CENTER);
+  drawingContext.shadowBlur = 40;
+  drawingContext.shadowColor = color(255,255,255,180);
+  tint(255,180);
+  image(border,width/2,height/2,width*1.4,height*1.4);
+  pop();
+}
+  
 }
 
 function drawX(X, Y) {
@@ -139,7 +154,7 @@ function drawX(X, Y) {
   line(X - 20, Y - 20, X + 20, Y + 20)
   line(X - 20, Y + 20, X + 20, Y - 20)
 
-  pop()
+  pop();
 }
 
 function drawGlowEye(x,y,w,h,col,pulse){
@@ -170,8 +185,23 @@ function drawGlowEye(x,y,w,h,col,pulse){
   fill(255,255,255,255);
   ellipse(x,y,w,h);
 
+  blurryellipse(x,y,w,h,color(255,255,255),12);
+
   pop();
 }
+
+function blurryellipse(x,y,w,h,baseCol,layers = 10){
+  noFill();
+  for (let i = 0; i < layers; i++){
+    let alpha = map(i,0,layers,120,0);
+    let weight = map(i,0,layers,1,7);
+    let scale = map(i,0,layers - 1,0.95,1.1);
+    stroke(red(baseCol),green(baseCol),blue(baseCol),alpha);
+    strokeWeight(weight);
+    ellipse(x,y,w*scale,h*scale);
+  }
+}
+
 
 
 // This function draw's a dot on all the keypoints. It can be passed a whole face, or part of one. 
