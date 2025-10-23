@@ -3,14 +3,13 @@
 function prepareInteraction() {
   //bgImage = loadImage('/images/background.png');
 }
-let isMouthOpen = false;
 
 function drawInteraction(faces, hands) {
 
   // for loop to capture if there is more than one face on the screen. This applies the same process to all faces. 
   for (let i = 0; i < faces.length; i++) {
     let face = faces[i]; // face holds all the keypoints of the face\
-    //  console.log(face);
+    console.log(face);
     if (showKeypoints) {
       drawPoints(face)
     }
@@ -25,14 +24,104 @@ function drawInteraction(faces, hands) {
      face.rightEye
      face.rightEyebrow
     */
+    // Here are some variables you may like to use. 
+    // Face basics
+    let faceCenterX = face.faceOval.centerX;
+    let faceCenterY = face.faceOval.centerY;
+    let faceWidth = face.faceOval.width;
+    let faceheight = face.faceOval.height;
+    // Left eye
+    let leftEyeCenterX = face.leftEye.centerX;
+    let leftEyeCenterY = face.leftEye.centerY;
+    let leftEyeWidth = face.leftEye.width;
+    let leftEyeHeight = face.leftEye.height;
+    // Left eyebrow
+    let leftEyebrowCenterX = face.leftEyebrow.centerX;
+    let leftEyebrowCenterY = face.leftEyebrow.centerY;
+    let leftEyebrowWidth = face.leftEyebrow.width;
+    let leftEyebrowHeight = face.leftEyebrow.height;
+
+    // Lips
+    let lipsCenterX = face.lips.centerX;
+    let lipsCenterY = face.lips.centerY;
+    let lipsWidth = face.lips.width;
+    let lipsHeight = face.lips.height;
+
+    // Right eye
+    let rightEyeCenterX = face.rightEye.centerX;
+    let rightEyeCenterY = face.rightEye.centerY;
+    let rightEyeWidth = face.rightEye.width;
+    let rightEyeHeight = face.rightEye.height;
+
+    // Right eyebrow
+    let rightEyebrowCenterX = face.rightEyebrow.centerX;
+    let rightEyebrowCenterY = face.rightEyebrow.centerY;
+    let rightEyebrowWidth = face.rightEyebrow.width;
+    let rightEyebrowHeight = face.rightEyebrow.height;
+
+    let noseTipX = face.keypoints[4].x;
+    let noseTipY = face.keypoints[4].y;
+
+    //my variables
+    let glowpulse = 0;
+    let glowdirection = 1;
+
+    //colours
+    let white = color(255,255,255,100);
+    let lightpurple = color(180,175,220,80);
+    let lightblue = color(180,200,235,90);
+    let purple = color(55,60,130,50);
+    let blue = color(55,95,165,65);
+  
 
     /*
     Start drawing on the face here
     */
-    checkIfMouthOpen(face);
-    if (isMouthOpen) {
-      text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
+
+    //eye glow
+    glowpulse += glowdirection * 0.2;
+    if (glowpulse > 6){
+      glowdirection = -1;
     }
+    if (glowpulse < 0){glowdirection = 1;
+    }
+
+    noStroke()
+    fill(225, 225, 0);
+    // fill(get(leftEyeCenterX, leftEyeCenterY))
+
+    //left eye
+    drawGlowEye
+      (leftEyeCenterX,leftEyeCenterY,
+        leftEyeWidth*1,leftEyeHeight*1,
+        color(200,0,255,255),glowpulse);
+
+    //right eye
+    drawGlowEye
+    (rightEyeCenterX,rightEyeCenterY,
+      rightEyeWidth*1,rightEyeHeight*1,
+      color(200,0,255,255),glowpulse);
+    
+      
+
+
+    //ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
+
+    //drawPoints(face.leftEye);
+    //drawPoints(face.leftEyebrow);
+    //drawPoints(face.lips);
+    //drawPoints(face.rightEye);
+    //drawPoints(face.rightEyebrow);
+
+    // drawX(rightEyeCenterX,rightEyeCenterY);
+    // drawX(leftEyeCenterX,leftEyeCenterY);
+
+
+    // drawX(noseTipX,noseTipY); 
+
+    // drawX(face.keypoints[332].x,face.keypoints[332].y);
+    // drawX(face.keypoints[103].x,face.keypoints[103].y);
+
 
     /*
     Stop drawing on the face here
@@ -43,24 +132,6 @@ function drawInteraction(faces, hands) {
   // You can make addtional elements here, but keep the face drawing inside the for loop. 
 }
 
-
-function checkIfMouthOpen(face) {
-
-  let upperLip = face.keypoints[13]
-  let lowerLip = face.keypoints[14]
-  // ellipse(lowerLip.x,lowerLip.y,20)
-  // ellipse(upperLip.x,upperLip.y,20)
-
-  let d = dist(upperLip.x, upperLip.y, lowerLip.x, lowerLip.y);
-  //console.log(d)
-  if (d < 10) {
-    isMouthOpen = false;
-  } else {
-    isMouthOpen = true;
-  }
-
-}
-
 function drawX(X, Y) {
   push()
 
@@ -69,6 +140,37 @@ function drawX(X, Y) {
   line(X - 20, Y + 20, X + 20, Y - 20)
 
   pop()
+}
+
+function drawGlowEye(x,y,w,h,col,pulse){
+  push();
+  noStroke();
+  
+  let outerpulse = sin(frameCount * 0.1) * 0.5 + 0.5;
+  let innerglowcol = lerpColor(color(255,100,255),color(0,200,255),outerpulse);
+  let outerglowcol = lerpColor(color(200,0,255),color(0,100,255),1-outerpulse);
+
+  drawingContext.shadowBlur = 80 + pulse*4;
+  drawingContext.shadowColor = outerglowcol;
+  fill(red(outerglowcol),green(outerglowcol),blue(outerglowcol),60);
+  ellipse(x,y,w,h);
+
+  drawingContext.shadowBlur = 50 + pulse*3;
+  drawingContext.shadowColor = col;
+  fill(red(col),green(col),blue(col),120);
+  ellipse(x,y,w,h);
+
+  drawingContext.shadowBlur = 30 + pulse*2;
+  drawingContext.shadowColor = innerglowcol;
+  fill(red(innerglowcol),green(innerglowcol),blue(innerglowcol),200);
+  ellipse(x,y,w,h);
+
+  drawingContext.shadowBlur = 15 + pulse;
+  drawingContext.shadowColor = color(255,255,255);
+  fill(255,255,255,255);
+  ellipse(x,y,w,h);
+
+  pop();
 }
 
 
