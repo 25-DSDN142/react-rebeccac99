@@ -6,6 +6,9 @@ function prepareInteraction() {
 let isMouthOpen = false;
 let glowpulse = 0
 let glowdirection = 1;
+let beamGrowth = 0;
+let beamSpeed = 0.05;
+let faceFade = 0;
 
 
 function drawInteraction(faces, hands) {
@@ -80,7 +83,14 @@ if (border) {
 }
 
     checkIfMouthOpen(face);
+
     if (isMouthOpen) {
+      beamGrowth += beamSpeed
+      if (beamGrowth > 1) beamGrowth = 1;
+    } else {
+      beamGrowth -= beamSpeed;
+      if (beamGrowth <0) beamGrowth = 0;
+    }
 
 //left eye
     drawGlowEye
@@ -141,91 +151,100 @@ drawEyeBeams(leftEyeCenterX,leftEyeCenterY,60,color(255,200,255,180));
 drawEyeBeams(rightEyeCenterX,rightEyeCenterY,60,color(255,200,255,180));
 
 function drawEyeBeams(x,y,length = 50,baseCol = color(255,255,255),layers = 10){
+  let pulse = sin(frameCount * 0.1) * 0.5+ 0.5;
+
   for (let i = 0; i < layers; i++){
-    let alpha = map(i,0,layers - 1,180,0);
+    let alpha = map(i,0,layers - 1,180,0)
     let weight = map(i,0,layers-1,6,1);
     let beamScale = map(i,0,layers - 1,0.8,1.2);
-    let beamLength = length * beamScale;
+    let beamLength = length * beamScale * beamGrowth;
+    let beamAlpha = map(i,0,layers-1,150,0)* pulse * beamGrowth
+    let beamGlow = map(i,0,layers - 1, 40,0)* pulse * beamGrowth
 
     stroke(255,255,255,alpha);
     strokeWeight(weight);
+      line(x-beamLength,y,x+beamLength,y);
+      line(x,y-beamLength,x,y+beamLength);
 
     drawingContext.shadowBlur = map(i,0,layers-1,50,0);
     drawingContext.shadowColor = color(255,255,255,alpha);
 
-    line(x-beamLength,y,x+beamLength,y);
-    line(x,y-beamLength,x,y+beamLength);
+    stroke(255,255,255,alpha);
+    strokeWeight(weight+2);
+    drawingContext.shadowBlur = beamGlow;
+    drawingContext.shadowColor = color (255,255,255,beamAlpha);
 
   }
 }
 
+//face outline
+drawFace(face);
 
-    }
-    else {
-
-    //eye glow
-    glowpulse += glowdirection * 0.2;
-    if (glowpulse > 6){
-      glowdirection = -1;
-    }
-    if (glowpulse < 0){glowdirection = 1;
-    }
-
-    //left eye
-    drawGlowEye
-      (leftEyeCenterX,leftEyeCenterY,
-        leftEyeWidth*1,leftEyeHeight*1,
-        color(200,0,255,255),glowpulse);
-
-    //right eye
-    drawGlowEye
-    (rightEyeCenterX,rightEyeCenterY,
-      rightEyeWidth*1,rightEyeHeight*1,
-      color(200,0,255,255),glowpulse);
-
-      function drawGlowEye(x,y,w,h,col,pulse){
-let outerpulse = sin(frameCount * 0.1) * 0.5 + 0.5;
-let innerglowcol = lerpColor(color(255,100,255),color(0,200,255),outerpulse);
-let outerglowcol = lerpColor(color(200,0,255),color(0,100,255),1-outerpulse);
-
-  drawingContext.shadowBlur = 80 + pulse*4;
-  drawingContext.shadowColor = outerglowcol;
-  fill(red(outerglowcol),green(outerglowcol),blue(outerglowcol),60);
-  ellipse(x,y,w,h);
-
-  drawingContext.shadowBlur = 50 + pulse*3;
-  drawingContext.shadowColor = col;
-  fill(red(col),green(col),blue(col),120);
-  ellipse(x,y,w,h);
-
-  drawingContext.shadowBlur = 30 + pulse*2;
-  drawingContext.shadowColor = innerglowcol;
-  fill(red(innerglowcol),green(innerglowcol),blue(innerglowcol),200);
-  ellipse(x,y,w,h);
-
-  drawingContext.shadowBlur = 15 + pulse;
-  drawingContext.shadowColor = color(255,255,255);
-  fill(255,255,255,255);
-  ellipse(x,y,w,h);
-
-  blurryellipse(x,y,w,h,color(255,255,255),12);
-
-  pop();
-  }
-       
-function blurryellipse(x,y,w,h,baseCol,layers = 10){
-  noFill();
-  for (let i = 0; i < layers; i++){
-    let alpha = map(i,0,layers,120,0);
-    let weight = map(i,0,layers,1,7);
-    let scale = map(i,0,layers - 1,0.95,1.1);
-    stroke(red(baseCol),green(baseCol),blue(baseCol),alpha);
-    strokeWeight(weight);
-    ellipse(x,y,w*scale,h*scale);
+function drawFace(face){
+  if (!isMouthOpen) {
+    faceFade = lerp(faceFade,1,0.1);
+  } else { 
+    faceFade = lerp(faceFade,0,0.1);
   }
 
+  if (faceFade < 0.01) return;
+
+let pulse = sin(frameCount * 0.1) * 0.5 + 0.5
+let faceOutlinePoints = [10, 338, 297, 332, 251, 389, 356, 447, 366, 435, 
+367, 379, 400, 152, 176, 150, 172, 132, 93, 234, 127, 21, 103, 67];
+let firstPt = face.keypoints[faceOutlinePoints[0]];
+let faceGlow = map(pulse,0,1,20,80);
+let baseAlpha = map(pulse,0,1,80,200) * faceFade;
+let lineWeight = map(pulse,0,1,1,4);
+
+
+push();
+noFill();
+stroke(255,255,255,180, layerAlpha);
+strokeWeight(layerWeight);
+drawingContext.shadowBlur = layerBlur;
+drawingContext.shadowColor = color(255,255,255,layerAlpha);
+
+for (let layer = 0; layer < 5; layer++){
+  let layerBlur = faceGlow * (1 + layer * 0.6);
+  let layerAlpha = baseAlpha * map(layer,0,4,0.6,0.05);
+  let layerWeight = lineWeight * (1+ layer * 1.5);
+
+
+beginShape();
+for (let i = 0; i < faceOutlinePoints.length; i++){
+  let pt= face.keypoints[faceOutlinePoints[i]];
+  vertex(pt.x,pt.y);
 }
+
+vertex(firstPt.x, firstPt.y);
+endShape();
 }
+
+stroke(255,255,255,faceGlowAlpha * 0.3);
+strokeWeight(lineWeight * 3);
+drawingContext.shadowBlur = faceGlow * 2;
+drawingContext.shadowColor = color(255,255,255, layerAlpha * 0.3);
+
+beginShape();
+for (let i = 0; i < faceOutlinePoints.length; i++) {
+  let pt = face.keypoints[faceOutlinePoints[i]];
+  vertex(pt.x,pt.y);
+}
+
+vertex(firstPt.x, firstPt.y,);
+endShape();
+
+pop();
+
+}
+
+//drawHighlight(face);
+
+//function drawHighlight (face);
+  //if(!isMouthOpen) return;
+  //let pulse = sin(frameCount * 0.1) * 0.5 + 0.5
+  //let highlightPoints = [143,111,117,118];
 
 
 
