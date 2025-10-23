@@ -137,29 +137,28 @@ function blurryellipse(x,y,w,h,baseCol,layers = 10){
 }
 
 //eye beams
-drawEyeBeams(leftEyeCenterX,leftEyeCenterY,color(255,200,255,180));
-drawEyeBeams(rightEyeCenterX,rightEyeCenterY,color(255,200,255,180));
+drawEyeBeams(leftEyeCenterX,leftEyeCenterY,60,color(255,200,255,180));
+drawEyeBeams(rightEyeCenterX,rightEyeCenterY,60,color(255,200,255,180));
 
-function drawEyeBeams(x,y,col){
-push();
-strokeWeight(3);
-let pulse = sin(frameCount * 0.1) * 0.5 + 0.5;
-let beamLength = 40 + pulse * 20;
-let alpha = 180 + pulse * 75;
+function drawEyeBeams(x,y,length = 50,baseCol = color(255,255,255),layers = 10){
+  for (let i = 0; i < layers; i++){
+    let alpha = map(i,0,layers - 1,180,0);
+    let weight = map(i,0,layers-1,6,1);
+    let beamScale = map(i,0,layers - 1,0.8,1.2);
+    let beamLength = length * beamScale;
 
-stroke(255,255,255, alpha);
-drawingContext.shadowBlur = 20 + pulse * 10;
-drawingContext.shadowColor = col;
+    stroke(255,255,255,alpha);
+    strokeWeight(weight);
 
-//horizontal beams
-line(x-beamLength,y,x+beamLength,y);
+    drawingContext.shadowBlur = map(i,0,layers-1,50,0);
+    drawingContext.shadowColor = color(255,255,255,alpha);
 
-//vertical beam
-line(x,y-beamLength,x,y+beamLength);
+    line(x-beamLength,y,x+beamLength,y);
+    line(x,y-beamLength,x,y+beamLength);
 
-pop();
-
+  }
 }
+
 
     }
     else {
